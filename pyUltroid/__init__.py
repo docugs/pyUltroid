@@ -1,9 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2021-2022 TeamUltroid
+# Copyright (C) 2021-2022 docugs
 #
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# This file is a part of < https://github.com/docugs/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
+# <https://github.com/docugs/pyUltroid/blob/main/LICENSE>.
 
 import sys
 
@@ -20,7 +20,7 @@ if sys.argv[0] == "-m":
     from .startup import *
     from .startup._database import UltroidDB
     from .startup.BaseClient import UltroidClient
-    from .startup.connections import session_file, vc_connection
+    from .startup.connections import validate_session, vc_connection
     from .startup.funcs import _version_changes, autobot, enable_inline, update_envs
     from .version import ultroid_version
 
@@ -44,7 +44,7 @@ if sys.argv[0] == "-m":
         ultroid_bot = None
     else:
         ultroid_bot = UltroidClient(
-            session_file(LOGS),
+            validate_session(LOGS),
             udB=udB,
             app_version=ultroid_version,
             device_model="Ultroid",
@@ -83,7 +83,7 @@ if sys.argv[0] == "-m":
     DUAL_HNDLR = udB.get_key("DUAL_HNDLR") or "/"
     SUDO_HNDLR = udB.get_key("SUDO_HNDLR") or HNDLR
 else:
-    print("pyUltroid 2022 © TeamUltroid")
+    print("pyUltroid 2022 © docugs")
 
     from logging import getLogger
 

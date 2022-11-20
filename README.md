@@ -1,12 +1,12 @@
 # py-Ultroid Library
 
-Core library of [The Ultroid](https://github.com/TeamUltroid/Ultroid), a python based telegram userbot.
+Core library of [The Ultroid](https://github.com/docugs/Ultroid), a python based telegram userbot.
 
-[![CodeFactor](https://www.codefactor.io/repository/github/teamultroid/pyultroid/badge)](https://www.codefactor.io/repository/github/teamultroid/pyultroid)
+[![CodeFactor](https://www.codefactor.io/repository/github/docugs/pyultroid/badge)](https://www.codefactor.io/repository/github/docugs/pyultroid)
 [![PyPI - Version](https://img.shields.io/pypi/v/py-Ultroid?style=round)](https://pypi.org/project/py-Ultroid)    
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/py-Ultroid?label=DOWNLOADS&style=round)](https://pypi.org/project/py-Ultroid)    
-[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/TeamUltroid/Ultroid/graphs/commit-activity)
-[![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/TeamUltroid/Ultroid)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/docugs/Ultroid/graphs/commit-activity)
+[![Open Source Love svg2](https://badges.frapsoft.com/os/v2/open-source.svg?v=103)](https://github.com/docugs/Ultroid)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://makeapullrequest.com)
 
 # Installation
@@ -29,7 +29,7 @@ pip3 install -U py-Ultroid
    REDIS_PASSWORD
    ```
 - Check
-[`.env.sample`](https://github.com/TeamUltroid/Ultroid/blob/main/.env.sample) for more details.   
+[`.env.sample`](https://github.com/docugs/Ultroid/blob/main/.env.sample) for more details.   
 - Run `python3 -m pyUltroid` to start the bot.   
 
 ## Creating plugins
@@ -62,15 +62,8 @@ async def _(e):
     await e.reply("Ultroid Started.")   
 ```
 
-See more working plugins on [the offical repository](https://github.com/TeamUltroid/Ultroid)!
+See more working plugins on [the offical repository](https://github.com/docugs/Ultroid)!
 
-> Made with 💕 by [@TeamUltroid](https://t.me/TeamUltroid).    
+> Integrated and improved with 💕 by [@Dr.ugs](https://t.me/doctor_ugs).   
 
-
-# License
-[![License](https://www.gnu.org/graphics/agplv3-155x51.png)](LICENSE)   
-Ultroid is licensed under [GNU Affero General Public License](https://www.gnu.org/licenses/agpl-3.0.en.html) v3 or later.
-
-# Credits
-* [![TeamUltroid-Devs](https://img.shields.io/static/v1?label=TeamUltroid&message=devs&color=critical)](https://t.me/UltroidDevs)
-* [Lonami](https://github.com/Lonami) for [Telethon](https://github.com/LonamiWebs/Telethon)
+> Credits to the owner of this source code @TeamUltroidDevs

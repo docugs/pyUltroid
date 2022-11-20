@@ -11,15 +11,15 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 name = "py-Ultroid"
-author = "TeamUltroid"
-author_email = "teamultroid@protonmail.ch"
+author = "Dr. ugs lab."
+author_email = "admin@doc-ugs.org"
 description = "A Secure and Powerful Python-Telethon Based Library For Ultroid Userbot."
 license_ = "GNU AFFERO GENERAL PUBLIC LICENSE (v3)"
-url = "https://github.com/TeamUltroid/pyUltroid"
+url = "https://github.com/docugs/pyUltroid"
 project_urls = {
-    "Bug Tracker": "https://github.com/TeamUltroid/pyUltroid/issues",
-    "Documentation": "https://ultroid.tech",
-    "Source Code": "https://github.com/TeamUltroid/pyUltroid",
+    "Bug Tracker": "https://github.com/docugs/pyUltroid/issues",
+    "Documentation": "https://doc-ugs.org",
+    "Source Code": "https://github.com/docugs/pyUltroid",
 }
 classifiers = [
     "Programming Language :: Python :: 3",

@@ -1,9 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2021-2022 TeamUltroid
+# Copyright (C) 2021-2022 Dr. ugs lab.
 #
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# This file is a part of < https://github.com/docugs/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
+# <https://github.com/docugs/pyUltroid/blob/main/LICENSE>.
 
 import asyncio
 import math
@@ -400,7 +400,7 @@ def make_html_telegraph(title, author, text):
     page = client.post(
         title=title,
         author=author,
-        author_url="https://t.me/TeamUltroid",
+        author_url="https://t.me/doctor_ugs",
         text=text,
     )
     return page["url"]

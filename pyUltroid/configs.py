@@ -1,9 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2021-2022 TeamUltroid
+# Copyright (C) 2021-2022 docugs
 #
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# This file is a part of < https://github.com/docugs/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
+# <https://github.com/docugs/pyUltroid/blob/main/LICENSE>.
 
 import sys
 
@@ -25,7 +25,7 @@ class Var:
     API_HASH = (
         sys.argv[2]
         if len(sys.argv) > 2
-        else config("API_HASH", default="eb06d4abfb49dc3eeb1aeb98ae0f581e")
+        else config("API_HASH", default="")
     )
     SESSION = sys.argv[3] if len(sys.argv) > 3 else config("SESSION", default=None)
     REDIS_URI = (
@@ -42,7 +42,7 @@ class Var:
     HEROKU_APP_NAME = config("HEROKU_APP_NAME", default=None)
     HEROKU_API = config("HEROKU_API", default=None)
     VC_SESSION = config("VC_SESSION", default=None)
-    ADDONS = config("ADDONS", default=False, cast=bool)
+    ADDONS = config("ADDONS", default=True, cast=bool)
     VCBOT = config("VCBOT", default=False, cast=bool)
     # for railway
     REDISPASSWORD = config("REDISPASSWORD", default=None)

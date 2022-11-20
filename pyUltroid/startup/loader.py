@@ -1,9 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2021-2022 TeamUltroid
+# Copyright (C) 2021-2022 Dr. ugs lab.
 #
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# This file is a part of < https://github.com/docugs/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
+# <https://github.com/docugs/pyUltroid/blob/main/LICENSE>.
 
 import os
 from shutil import rmtree
@@ -62,14 +62,14 @@ def load_other_plugins(addons=None, pmbot=None, manager=None, vcbot=None):
             rmtree("addons")
         if not os.path.exists("addons"):
             os.system(
-                f"git clone -q -b {Repo().active_branch} https://github.com/TeamUltroid/UltroidAddons.git addons"
+                f"git clone -q -b {Repo().active_branch} https://github.com/docugs/pluginpack2.git addons"
             )
         else:
             os.system("cd addons && git pull -q && cd ..")
 
         if not os.path.exists("addons"):
             os.system(
-                "git clone -q https://github.com/TeamUltroid/UltroidAddons.git addons"
+                "git clone -q https://github.com/docugs/pluginpack2.git addons"
             )
         if os.path.exists("addons/addons.txt"):
             # generally addons req already there so it won't take much time

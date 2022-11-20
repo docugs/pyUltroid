@@ -12,10 +12,12 @@ from sys import modules
 
 
 def load_addons(plugin_name):
-    if plugin_name.startswith("__"):
+    base_name = plugin_name.split("/")[-1].split("\\")[-1].replace(".py", "")
+    if base_name.startswith("__"):
         return
     from .. import HNDLR, LOGS, asst, udB, ultroid_bot
     from .._misc import _supporter as xxx
+    from pyUltroid import fns
     from .._misc._assistant import asst_cmd, callback, in_pattern
     from .._misc._decorators import ultroid_cmd
     from .._misc._supporter import Config, admin_cmd, sudo_cmd
@@ -23,9 +25,8 @@ def load_addons(plugin_name):
     from ..configs import Var
     from ..dB._core import HELP
 
-    path = "addons/" + plugin_name
-    name = path.replace("/", ".").replace("\\", ".")
-    spec = util.spec_from_file_location(name, path + ".py")
+    name = plugin_name.replace("/", ".").replace("\\", ".").replace(".py","")
+    spec = util.spec_from_file_location(name, plugin_name)
     mod = util.module_from_spec(spec)
     mod.LOG_CHANNEL = udB.get_key("LOG_CHANNEL")
     mod.udB = udB
@@ -62,36 +63,30 @@ def load_addons(plugin_name):
     mod.CMD_HELP = HELP.get("Addons", {})
     modules["ub"] = xxx
     modules["var"] = xxx
-    modules["jarvis"] = xxx
     modules["support"] = xxx
     modules["userbot"] = xxx
     modules["telebot"] = xxx
     modules["fridaybot"] = xxx
-    modules["jarvis.utils"] = xxx
     modules["uniborg.util"] = xxx
     modules["telebot.utils"] = xxx
     modules["userbot.utils"] = xxx
     modules["userbot.events"] = xxx
-    modules["jarvis.jconfig"] = xxx
     modules["userbot.config"] = xxx
     modules["fridaybot.utils"] = xxx
     modules["fridaybot.Config"] = xxx
     modules["userbot.uniborgConfig"] = xxx
+    modules["pyUltroid.functions"] = fns
     spec.loader.exec_module(mod)
-    modules["addons." + plugin_name] = mod
-    doc = (
-        modules[f"addons.{plugin_name}"].__doc__.format(i=HNDLR)
-        if modules[f"addons.{plugin_name}"].__doc__
-        else ""
-    )
+    modules[name] = mod
+    doc = modules[name].__doc__.format(i=HNDLR) if modules[name].__doc__ else ""
     if "Addons" in HELP.keys():
         update_cmd = HELP["Addons"]
         try:
-            update_cmd.update({plugin_name: doc})
+            update_cmd.update({base_name: doc})
         except BaseException:
             pass
     else:
         try:
-            HELP.update({"Addons": {plugin_name: doc}})
+            HELP.update({"Addons": {base_name: doc}})
         except BaseException as em:
             pass

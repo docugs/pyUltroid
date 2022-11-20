@@ -9,7 +9,6 @@ import inspect
 import sys
 import time
 from logging import Logger
-from re import findall
 
 from telethon import TelegramClient
 from telethon import utils as telethon_utils
@@ -18,9 +17,6 @@ from telethon.errors import (
     AccessTokenInvalidError,
     ApiIdInvalidError,
     AuthKeyDuplicatedError,
-)
-from telethon.network.connection import (
-    ConnectionTcpMTProxyRandomizedIntermediate as MtProxy,
 )
 
 from ..configs import Var
@@ -33,47 +29,25 @@ class UltroidClient(TelegramClient):
         session,
         api_id=None,
         api_hash=None,
-        proxy=None,
         bot_token=None,
         udB=None,
         logger: Logger = LOGS,
         log_attempt=True,
-        handle_auth_error=True,
+        exit_on_error=True,
         *args,
         **kwargs,
     ):
         self._cache = {}
         self._dialogs = []
-        self._handle_error = handle_auth_error
+        self._handle_error = exit_on_error
         self._log_at = log_attempt
         self.logger = logger
         self.udB = udB
-        self.proxy = proxy
         kwargs["api_id"] = api_id or Var.API_ID
         kwargs["api_hash"] = api_hash or Var.API_HASH
         kwargs["base_logger"] = TelethonLogger
-        if proxy:
-            try:
-                _proxy = findall("\\=([^&]+)", proxy)
-                if findall("socks", proxy):
-                    kwargs["proxy"] = ("socks5", _proxy[0], int(_proxy[1]))
-                else:
-                    kwargs["connection"] = MtProxy
-                    kwargs["proxy"] = (_proxy[0], int(_proxy[1]), _proxy[2])
-            except ValueError:
-                kwargs["connection"] = None
-                kwargs["proxy"] = None
         super().__init__(session, **kwargs)
-        try:
-            self.run_in_loop(self.start_client(bot_token=bot_token))
-        except ValueError as er:
-            LOGS.info(er)
-            if proxy:
-                udB.del_key("TG_PROXY")
-                del kwargs["connection"]
-                del kwargs["proxy"]
-            super().__init__(session, **kwargs)
-            self.run_in_loop(self.start_client(bot_token=bot_token))
+        self.run_in_loop(self.start_client(bot_token=bot_token))
         self.dc_id = self.session.dc_id
 
     def __repr__(self):
@@ -100,20 +74,15 @@ class UltroidClient(TelegramClient):
             if self._handle_error:
                 self.logger.critical("String session expired. Create new!")
                 return sys.exit()
-            raise er
-        except AccessTokenExpiredError:
+            self.logger.critical("String session expired.")
+        except (AccessTokenExpiredError, AccessTokenInvalidError):
             # AccessTokenError can only occur for Bot account
-            # And at Early Process, Its saved in Redis.
+            # And at Early Process, Its saved in DB.
             self.udB.del_key("BOT_TOKEN")
             self.logger.critical(
-                "Bot token expired. Create new from @Botfather and add in BOT_TOKEN env variable!"
+                "Bot token is expired or invalid. Create new from @Botfather and add in BOT_TOKEN env variable!"
             )
             sys.exit()
-        except AccessTokenInvalidError:
-            self.udB.del_key("BOT_TOKEN")
-            self.logger.critical("The provided bot token is not valid! Quitting...")
-            sys.exit()
-
         # Save some stuff for later use...
         self.me = await self.get_me()
         if self.me.bot:
@@ -161,8 +130,8 @@ class UltroidClient(TelegramClient):
                         except FileNotFoundError:
                             pass
                     return files["raw_file"], time.time() - start_time
-        from pyUltroid.functions.FastTelethon import upload_file
-        from pyUltroid.functions.helper import progress
+        from pyUltroid.fns.FastTelethon import upload_file
+        from pyUltroid.fns.helper import progress
 
         raw_file = None
         while not raw_file:
@@ -211,8 +180,8 @@ class UltroidClient(TelegramClient):
 
         from telethon.tl.types import DocumentAttributeFilename
 
-        from pyUltroid.functions.FastTelethon import download_file
-        from pyUltroid.functions.helper import progress
+        from pyUltroid.fns.FastTelethon import download_file
+        from pyUltroid.fns.helper import progress
 
         start_time = time.time()
         # Auto-generate Filename
@@ -257,9 +226,8 @@ class UltroidClient(TelegramClient):
 
     def add_handler(self, func, *args, **kwargs):
         """Add new event handler, ignoring if exists"""
-        for f_, _ in self.list_event_handlers():
-            if f_ == func:
-                return
+        if func in [_[0] for _ in self.list_event_handlers()]:
+            return
         self.add_event_handler(func, *args, **kwargs)
 
     @property

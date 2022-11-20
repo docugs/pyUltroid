@@ -1,9 +1,9 @@
 # Ultroid - UserBot
-# Copyright (C) 2021-2022 TeamUltroid
+# Copyright (C) 2021-2022 Dr. ugs lab.
 #
-# This file is a part of < https://github.com/TeamUltroid/Ultroid/ >
+# This file is a part of < https://github.com/docugs/Ultroid/ >
 # PLease read the GNU Affero General Public License in
-# <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
+# <https://github.com/docugs/pyUltroid/blob/main/LICENSE>.
 
 import inspect
 import re
@@ -22,7 +22,7 @@ MSG = f"""
 **Ultroid - UserBot**
 ➖➖➖➖➖➖➖➖➖➖
 **Owner**: [{OWNER}](tg://user?id={ultroid_bot.uid})
-**Support**: @TeamUltroid
+**Support**: @Dr.ugs
 ➖➖➖➖➖➖➖➖➖➖
 """
 
@@ -30,7 +30,7 @@ IN_BTTS = [
     [
         Button.url(
             "Repository",
-            url="https://github.com/TeamUltroid/Ultroid",
+            url="https://github.com/docugs/Ultroid",
         ),
         Button.url("Support", url="https://t.me/UltroidSupport"),
     ]
@@ -91,7 +91,7 @@ def in_pattern(pattern=None, owner=False, **kwargs):
                     await event.builder.article(
                         title="Ultroid Userbot",
                         url="https://t.me/TheUltroid",
-                        description="(c) TeamUltroid",
+                        description="(c) Dr.ugs",
                         text=MSG,
                         thumb=InputWebDocument(
                             "https://telegra.ph/file/dde85d441fa051a0d7d1d.jpg",

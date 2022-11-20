@@ -5,18 +5,9 @@
 # PLease read the GNU Affero General Public License in
 # <https://github.com/TeamUltroid/pyUltroid/blob/main/LICENSE>.
 
+import ast
 import os
 import sys
-
-try:
-    from ..exceptions import DependencyMissingError
-except ImportError:
-    from .exceptions import DependencyMissingError
-
-try:
-    from redis import Redis
-except ImportError:
-    Redis = None
 
 from .. import run_as_module
 from . import *
@@ -24,44 +15,101 @@ from . import *
 if run_as_module:
     from ..configs import Var
 
-try:
-    from pymongo import MongoClient
-except ImportError:
-    MongoClient = None
-    if Var.MONGO_URI:
-        LOGS.warning(
-            "'pymongo' not found!\nInstall pymongo[srv] to use Mongo database.."
-        )
 
-
-try:
-    import psycopg2
-except ImportError:
-    psycopg2 = None
-    if Var.DATABASE_URL:
-        LOGS.warning("'psycopg2' not found!\nInstall psycopg2 to use SQL database..")
+Redis = MongoClient = psycopg2 = Database = None
+if (Var.REDIS_URI or Var.REDISHOST):
+    try:
+        from redis import Redis
+    except ImportError:
+        LOGS.info("Installing 'redis' for database.")
+        os.system("pip3 install -q redis hiredis")
+        from redis import Redis
+elif Var.MONGO_URI:
+    try:
+        from pymongo import MongoClient
+    except ImportError:
+        LOGS.info("Installing 'pymongo' for database.")
+        os.system("pip3 install -q pymongo[srv]")
+        from pymongo import MongoClient
+elif Var.DATABASE_URL:
+    try:
+        import psycopg2
+    except ImportError:
+        LOGS.info("Installing 'pyscopg2' for database.")
+        os.system("pip3 install -q psycopg2-binary")
+        import psycopg2
+else:
+    try:
+        from localdb import Database
+    except ImportError:
+        LOGS.info("Using local file as database.")
+        os.system("pip3 install -q localdb.json")
+        from localdb import Database
 
 # --------------------------------------------------------------------------------------------- #
 
 
-def get_data(self_, key):
-    data = self_.get(str(key))
-    if data:
-        try:
-            data = eval(data)
-        except BaseException:
-            pass
-    return data
+class _BaseDatabase:
+    def __init__(self, *args, **kwargs):
+        self._cache = {}
+
+    def get_key(self, key):
+        if key in self._cache:
+            return self._cache[key]
+        value = self._get_data(key)
+        self._cache.update({key: value})
+        return value
+
+    def re_cache(self):
+        self._cache.clear()
+        for key in self.keys():
+            self._cache.update({key: self.get_key(key)})
+
+    def ping(self):
+        return 1
+
+    @property
+    def usage(self):
+        return 0
+
+    def keys(self):
+        return []
+
+    def del_key(self, key):
+        if key in self._cache:
+            del self._cache[key]
+        self.delete(key)
+        return True
+
+    def _get_data(self, key=None, data=None):
+        if key:
+            data = self.get(str(key))
+        if data:
+            try:
+                data = ast.literal_eval(data)
+            except BaseException:
+                pass
+        return data
+
+    def set_key(self, key, value):
+        value = self._get_data(data=value)
+        self._cache[key] = value
+        return self.set(str(key), str(value))
+
+    def rename(self, key1, key2):
+        _ = self.get_key(key1)
+        if _:
+            self.del_key(key1)
+            self.set_key(key2, _)
+            return 0
+        return 1
 
 
-# --------------------------------------------------------------------------------------------- #
-
-
-class MongoDB:
+class MongoDB(_BaseDatabase):
     def __init__(self, key, dbname="UltroidDB"):
         self.dB = MongoClient(key, serverSelectionTimeoutMS=5000)
         self.db = self.dB[dbname]
-        self.re_cache()
+        super().__init__()
 
     def __repr__(self):
         return f"<Ultroid.MonGoDB\n -total_keys: {len(self.keys())}\n>"
@@ -73,11 +121,6 @@ class MongoDB:
     @property
     def usage(self):
         return self.db.command("dbstats")["dataSize"]
-
-    def re_cache(self):
-        self._cache = {}
-        for key in self.keys():
-            self._cache.update({key: self.get_key(key)})
 
     def ping(self):
         if self.dB.server_info():
@@ -94,23 +137,8 @@ class MongoDB:
         self._cache.update({key: value})
         return True
 
-    def del_key(self, key):
-        if key in self.keys():
-            try:
-                del self._cache[key]
-            except KeyError:
-                pass
-            self.db.drop_collection(key)
-            return True
-
-    def get_key(self, key):
-        if key in self._cache:
-            return self._cache[key]
-        if key in self.keys():
-            value = get_data(self, key)
-            self._cache.update({key: value})
-            return value
-        return None
+    def delete(self, key):
+        self.db.drop_collection(key)
 
     def get(self, key):
         if x := self.db[key].find_one({"_id": key}):
@@ -118,7 +146,7 @@ class MongoDB:
 
     def flushall(self):
         self.dB.drop_database("UltroidDB")
-        self._cache = {}
+        self._cache.clear()
         return True
 
 
@@ -130,7 +158,7 @@ class MongoDB:
 # Please use https://elephantsql.com/ !
 
 
-class SqlDB:
+class SqlDB(_BaseDatabase):
     def __init__(self, url):
         self._url = url
         self._connection = None
@@ -148,7 +176,7 @@ class SqlDB:
             if self._connection:
                 self._connection.close()
             sys.exit()
-        self.re_cache()
+        super().__init__()
 
     @property
     def name(self):
@@ -162,27 +190,12 @@ class SqlDB:
         data = self._cursor.fetchall()
         return int(data[0][0].split()[0])
 
-    def re_cache(self):
-        self._cache = {}
-        for key in self.keys():
-            self._cache.update({key: self.get_key(key)})
-
     def keys(self):
         self._cursor.execute(
             "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name  = 'ultroid'"
         )  # case sensitive
         data = self._cursor.fetchall()
         return [_[0] for _ in data]
-
-    def ping(self):
-        return True
-
-    def get_key(self, variable):
-        if variable in self._cache:
-            return self._cache[variable]
-        get_ = get_data(self, variable)
-        self._cache.update({variable: get_})
-        return get_
 
     def get(self, variable):
         try:
@@ -197,7 +210,7 @@ class SqlDB:
                 if i[0]:
                     return i[0]
 
-    def set_key(self, key, value):
+    def set(self, key, value):
         try:
             self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN IF EXISTS {key}")
         except (psycopg2.errors.UndefinedColumn, psycopg2.errors.SyntaxError):
@@ -209,16 +222,12 @@ class SqlDB:
         self._cursor.execute(f"INSERT INTO Ultroid ({key}) values (%s)", (str(value),))
         return True
 
-    def del_key(self, key):
-        if key in self._cache:
-            del self._cache[key]
+    def delete(self, key):
         try:
             self._cursor.execute(f"ALTER TABLE Ultroid DROP COLUMN {key}")
         except psycopg2.errors.UndefinedColumn:
             return False
         return True
-
-    delete = del_key
 
     def flushall(self):
         self._cache.clear()
@@ -228,19 +237,11 @@ class SqlDB:
         )
         return True
 
-    def rename(self, key1, key2):
-        _ = self.get_key(key1)
-        if _:
-            self.del_key(key1)
-            self.set_key(key2, _)
-            return 0
-        return 1
-
 
 # --------------------------------------------------------------------------------------------- #
 
 
-class RedisDB:
+class RedisDB(_BaseDatabase):
     def __init__(
         self,
         host,
@@ -251,10 +252,6 @@ class RedisDB:
         *args,
         **kwargs,
     ):
-        if not Redis:
-            raise DependencyMissingError(
-                "'redis' module is not installed!\nInstall it to use RedisDB"
-            )
         if host and ":" in host:
             spli_ = host.split(":")
             host = spli_[0]
@@ -288,15 +285,8 @@ class RedisDB:
         self.set = self.db.set
         self.get = self.db.get
         self.keys = self.db.keys
-        self.ping = self.db.ping
         self.delete = self.db.delete
-        self.re_cache()
-
-    # dict is faster than Redis
-    def re_cache(self):
-        self._cache = {}
-        for keys in self.keys():
-            self._cache.update({keys: self.get_key(keys)})
+        super().__init__()
 
     @property
     def name(self):
@@ -306,52 +296,49 @@ class RedisDB:
     def usage(self):
         return sum(self.db.memory_usage(x) for x in self.keys())
 
-    def set_key(self, key, value):
-        value = str(value)
-        try:
-            value = eval(value)
-        except BaseException:
-            pass
-        self._cache.update({key: value})
-        return self.set(str(key), str(value))
-
-    def get_key(self, key):
-        if key in self._cache:
-            return self._cache[key]
-        _ = get_data(self, key)
-        self._cache.update({key: _})
-        return _
-
-    def del_key(self, key):
-        if key in self._cache:
-            del self._cache[key]
-        return bool(self.delete(str(key)))
-
 
 # --------------------------------------------------------------------------------------------- #
 
 
+class LocalDB(_BaseDatabase):
+    def __init__(self):
+        self.db = Database("ultroid")
+        super().__init__()
+
+    def keys(self):
+        return self._cache.keys()
+
+    def __repr__(self):
+        return f"<Ultroid.LocalDB\n -total_keys: {len(self.keys())}\n>"
+
+
 def UltroidDB():
-    if Var.REDIS_URI or Var.REDISHOST:
-        from .. import HOSTED_ON
-
-        return RedisDB(
-            host=Var.REDIS_URI or Var.REDISHOST,
-            password=Var.REDIS_PASSWORD or Var.REDISPASSWORD,
-            port=Var.REDISPORT,
-            platform=HOSTED_ON,
-            decode_responses=True,
-            socket_timeout=5,
-            retry_on_timeout=True,
+    _er = False
+    from .. import HOSTED_ON
+    try:
+        if Redis:
+            return RedisDB(
+                host=Var.REDIS_URI or Var.REDISHOST,
+                password=Var.REDIS_PASSWORD or Var.REDISPASSWORD,
+                port=Var.REDISPORT,
+                platform=HOSTED_ON,
+                decode_responses=True,
+                socket_timeout=5,
+                retry_on_timeout=True,
+            )
+        if MongoClient:
+            return MongoDB(Var.MONGO_URI)
+        if psycopg2:
+            return SqlDB(Var.DATABASE_URL)
+    except BaseException as err:
+        LOGS.exception(err)
+        _er = True
+    if not _er:
+        LOGS.critical(
+            "No DB requirement fullfilled!\nPlease install redis, mongo or sql dependencies...\nTill then using local file as database."
         )
-    if MongoClient and Var.MONGO_URI:
-        return MongoDB(Var.MONGO_URI)
-    if psycopg2 and Var.DATABASE_URL:
-        return SqlDB(Var.DATABASE_URL)
-    LOGS.critical(
-        "No DB requirement fullfilled!\nPlease install redis, mongo or sql dependencies.."
-    )
+    if HOSTED_ON == "termux":
+        return LocalDB()
     exit()
-
 
 # --------------------------------------------------------------------------------------------- #
